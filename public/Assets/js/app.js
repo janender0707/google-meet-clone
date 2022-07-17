@@ -6,6 +6,7 @@ var AppProcess = (function () {
   var local_div;
   var serverProcess;
   var audio;
+  // initially we have set the audio as muted
   var isAudioMute = true;
   var rtp_aud_senders = [];
   var video_states = {
@@ -16,12 +17,15 @@ var AppProcess = (function () {
   var video_st = video_states.None;
   var videoCamTrack;
   var rtp_vid_senders = [];
+
   async function _init(SDP_function, my_connid) {
     serverProcess = SDP_function;
     my_connection_id = my_connid;
     eventProcess();
     local_div = document.getElementById("locaVideoPlayer");
   }
+
+  // this function handles for mic mute and unmute
   function eventProcess() {
     $("#miceMuteUnmute").on("click", async function () {
       if (!audio) {
@@ -46,14 +50,18 @@ var AppProcess = (function () {
       }
       isAudioMute = !isAudioMute;
     });
+    // this handles with video on or off
     $("#videoCamOnOff").on("click", async function () {
       if (video_st == video_states.Camera) {
+        // if we click on video button when the video state is already camera on , then change the video state to none
         await videoProcess(video_states.None);
       } else {
         await videoProcess(video_states.Camera);
       }
     });
+    // this function handles with screenshare
     $("#ScreenShareOnOf").on("click", async function () {
+      // if we click on screenshare button when the video state is already screensharing, then change the video state to none
       if (video_st == video_states.ScreenShare) {
         await videoProcess(video_states.None);
       } else {
@@ -61,6 +69,8 @@ var AppProcess = (function () {
       }
     });
   }
+
+  // async function to load audio
   async function loadAudio() {
     try {
       var astream = await navigator.mediaDevices.getUserMedia({
@@ -105,6 +115,8 @@ var AppProcess = (function () {
       }
     }
   }
+
+  // function if we want to stop video stream
   function removeVideoStream(rtp_vid_senders) {
     if (videoCamTrack) {
       videoCamTrack.stop();
@@ -113,6 +125,8 @@ var AppProcess = (function () {
       removeMediaSenders(rtp_vid_senders);
     }
   }
+
+  // function to update the icons accordingly as per state
   async function videoProcess(newVideoState) {
     if (newVideoState == video_states.None) {
       $("#videoCamOnOff").html(
@@ -134,6 +148,11 @@ var AppProcess = (function () {
     try {
       var vstream = null;
       if (newVideoState == video_states.Camera) {
+
+        // setting up the height and width of the video that is streaming
+
+        //getUserMedia() method prompts the user for permission to use a media 
+        //input which produces a MediaStream with tracks containing the requested types of media.
         vstream = await navigator.mediaDevices.getUserMedia({
           video: {
             width: 1920,
@@ -142,6 +161,9 @@ var AppProcess = (function () {
           audio: false,
         });
       } else if (newVideoState == video_states.ScreenShare) {
+
+        //getDisplayMedia() method prompts the user to select and grant permission to capture the contents of a display or 
+        //portion thereof (such as a window) as a MediaStream.
         vstream = await navigator.mediaDevices.getDisplayMedia({
           video: {
             width: 1920,
@@ -187,6 +209,7 @@ var AppProcess = (function () {
   var iceConfiguration = {
     iceServers: [
       {
+        //A stun server is needed for two clients to communicate using webrtc if they are behind NAT
         urls: "stun:stun.l.google.com:19302",
       },
       {
@@ -196,7 +219,14 @@ var AppProcess = (function () {
   };
 
   async function setConnection(connid) {
+    //The RTCPeerConnection interface represents a WebRTC connection between the local computer and a remote peer.
+    //WebRTC is a free and open-source project providing web browsers and mobile applications with real-time 
+    //communication via APIs
+    
     var connection = new RTCPeerConnection(iceConfiguration);
+
+    //A negotiationneeded event is sent to the RTCPeerConnection when negotiation of the connection 
+    //through the signaling channel is required, it usually happens in initial phase or when a change occurs
 
     connection.onnegotiationneeded = async function (event) {
       await setOffer(connid);
@@ -425,11 +455,11 @@ var MyApp = (function () {
       });
       var div = $("<div>").html(
         "<span class='font-weight-bold mr-3' style='color:black'>" +
-          data.from +
-          "</span>" +
-          lTime +
-          "</br>" +
-          data.message
+        data.from +
+        "</span>" +
+        lTime +
+        "</br>" +
+        data.message
       );
       $("#messages").append(div);
     });
@@ -446,11 +476,11 @@ var MyApp = (function () {
       });
       var div = $("<div>").html(
         "<span class='font-weight-bold mr-3' style='color:black'>" +
-          user_id +
-          "</span>" +
-          lTime +
-          "</br>" +
-          msgData
+        user_id +
+        "</span>" +
+        lTime +
+        "</br>" +
+        msgData
       );
       $("#messages").append(div);
       $("#msgbox").val("");
@@ -474,10 +504,10 @@ var MyApp = (function () {
     $("#divUsers").append(newDivId);
     $(".in-call-wrap-up").append(
       '<div class="in-call-wrap d-flex justify-content-between align-items-center mb-3" id="participant_' +
-        connId +
-        '"> <div class="participant-img-name-wrap display-center cursor-pointer"> <div class="participant-img"> <img src="public/Assets/images/other.jpg" alt="" class="border border-secondary" style="height: 40px;width: 40px;border-radius: 50%;"> </div> <div class="participant-name ml-2"> ' +
-        other_user_id +
-        '</div> </div> <div class="participant-action-wrap display-center"> <div class="participant-action-dot display-center mr-2 cursor-pointer"> <span class="material-icons"> more_vert </span> </div> <div class="participant-action-pin display-center mr-2 cursor-pointer"> <span class="material-icons"> push_pin </span> </div> </div> </div>'
+      connId +
+      '"> <div class="participant-img-name-wrap display-center cursor-pointer"> <div class="participant-img"> <img src="public/Assets/images/other.jpg" alt="" class="border border-secondary" style="height: 40px;width: 40px;border-radius: 50%;"> </div> <div class="participant-name ml-2"> ' +
+      other_user_id +
+      '</div> </div> <div class="participant-action-wrap display-center"> <div class="participant-action-dot display-center mr-2 cursor-pointer"> <span class="material-icons"> more_vert </span> </div> <div class="participant-action-pin display-center mr-2 cursor-pointer"> <span class="material-icons"> push_pin </span> </div> </div> </div>'
     );
     $(".participant-count").text(userNum);
   }

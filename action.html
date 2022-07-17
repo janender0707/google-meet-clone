@@ -66,14 +66,17 @@
     <script>
         $(function(){
             $(document).on("click", ".join-meeting", function(){
+    // when a user wants to join a meeting and he has a meeting code, he enters it
                 $(".enter-code").focus();
             })
             $(document).on("click", ".join-action", function(){
+    // the window url replaced with the one with meeting id
                 var join_value = $('.enter-code').val();
                 var meetingUrl = window.location.origin+"?meetingID="+join_value;
                 window.location.replace(meetingUrl);
             })
             $(document).on("click", ".new-meeting", function(){
+    // if we start a new meeting, a random 8 digit no will be our meeting code 
                var eight_d_value = Math.floor(Math.random()*100000000);
                 var meetingUrl = window.location.origin+"?meetingID="+eight_d_value;
                 window.location.replace(meetingUrl);
