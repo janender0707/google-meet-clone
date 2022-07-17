@@ -11,6 +11,8 @@ const io = require("socket.io")(server, {
 });
 app.use(express.static(path.join(__dirname, "")));
 var userConnections = [];
+
+//socket listen on the connection event and log it to console
 io.on("connection", (socket) => {
   console.log("socket id is ", socket.id);
   socket.on("userconnect", (data) => {
@@ -32,6 +34,7 @@ io.on("connection", (socket) => {
         userNumber: userCount,
       });
     });
+// In order to send an event to everyone, socket.io gives us the io.emit() method.
     socket.emit("inform_me_about_other_user", other_users);
   });
   socket.on("SDPProcess", (data) => {
