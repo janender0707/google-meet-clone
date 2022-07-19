@@ -222,7 +222,7 @@ var AppProcess = (function () {
     //The RTCPeerConnection interface represents a WebRTC connection between the local computer and a remote peer.
     //WebRTC is a free and open-source project providing web browsers and mobile applications with real-time 
     //communication via APIs
-    
+
     var connection = new RTCPeerConnection(iceConfiguration);
 
     //A negotiationneeded event is sent to the RTCPeerConnection when negotiation of the connection 
@@ -314,7 +314,11 @@ var AppProcess = (function () {
         }),
         from_connid
       );
-    } else if (message.icecandidate) {
+
+  //An icecandidate event is sent to an RTCPeerConnection when an RTCIceCandidate has been
+  // identified and added to the local peer by a call to RTCPeerConnection.setLocalDescription()
+    
+      } else if (message.icecandidate) {
       if (!peers_connection[from_connid]) {
         await setConnection(from_connid);
       }
@@ -369,8 +373,11 @@ var MyApp = (function () {
     user_id = uid;
     meeting_id = mid;
     $("#meetingContainer").show();
+  // code that shows details about the host in the meeting
     $("#me h2").text(user_id + "(Me)");
     document.title = user_id;
+  //WebRTC allows real-time, peer-to-peer, media exchange between two devices.
+  // A connection is established through a discovery and negotiation process called signaling.
     event_process_for_signaling_server();
     eventHandeling();
   }
@@ -379,6 +386,7 @@ var MyApp = (function () {
     socket = io.connect();
 
     var SDP_function = function (data, to_connid) {
+  // with socket.emit, the message is presented to every member in the meeting
       socket.emit("SDPProcess", {
         message: data,
         to_connid: to_connid,
@@ -387,6 +395,7 @@ var MyApp = (function () {
     socket.on("connect", () => {
       if (socket.connected) {
         AppProcess.init(SDP_function, socket.id);
+      // the user's info will be displayed only if both the user id and meeting id is present.
         if (user_id != "" && meeting_id != "") {
           socket.emit("userconnect", {
             displayName: user_id,
@@ -413,6 +422,7 @@ var MyApp = (function () {
       $(".g-details").css({ "margin-top": mar_top });
 
       var time = new Date();
+      // to show the date and time 
       var lTime = time.toLocaleString("en-US", {
         hour: "numeric",
         minute: "numeric",
@@ -429,6 +439,8 @@ var MyApp = (function () {
         data.fileName +
         "</a></div></div><br/>";
     });
+
+    // to get info about other users, if they are present
     socket.on("inform_me_about_other_user", function (other_users) {
       var userNumber = other_users.length;
       var userNumb = userNumber + 1;
@@ -446,6 +458,7 @@ var MyApp = (function () {
     socket.on("SDPProcess", async function (data) {
       await AppProcess.processClientFunc(data.message, data.from_connid);
     });
+    // to show us the message in the chat, with timestamps and user details
     socket.on("showChatMessage", function (data) {
       var time = new Date();
       var lTime = time.toLocaleString("en-US", {
@@ -461,9 +474,12 @@ var MyApp = (function () {
         "</br>" +
         data.message
       );
+      // append the message to messages
       $("#messages").append(div);
     });
   }
+
+  // function to handle message sent
   function eventHandeling() {
     $("#btnsend").on("click", function () {
       var msgData = $("#msgbox").val();
@@ -494,13 +510,17 @@ var MyApp = (function () {
     });
   }
 
+  // when a new user joins
   function addUser(other_user_id, connId, userNum) {
+    // clone the basic template of the user display
     var newDivId = $("#otherTemplate").clone();
     newDivId = newDivId.attr("id", connId).addClass("other");
+    // add details of the user, that to be displayed
     newDivId.find("h2").text(other_user_id);
     newDivId.find("video").attr("id", "v_" + connId);
     newDivId.find("audio").attr("id", "a_" + connId);
     newDivId.show();
+    // append the new user to users
     $("#divUsers").append(newDivId);
     $(".in-call-wrap-up").append(
       '<div class="in-call-wrap d-flex justify-content-between align-items-center mb-3" id="participant_' +
@@ -509,20 +529,25 @@ var MyApp = (function () {
       other_user_id +
       '</div> </div> <div class="participant-action-wrap display-center"> <div class="participant-action-dot display-center mr-2 cursor-pointer"> <span class="material-icons"> more_vert </span> </div> <div class="participant-action-pin display-center mr-2 cursor-pointer"> <span class="material-icons"> push_pin </span> </div> </div> </div>'
     );
+    // show the total no of participants
     $(".participant-count").text(userNum);
   }
+  // if someone click on people, show participants and hide chats
   $(document).on("click", ".people-heading", function () {
+    // http response code 300 means the request has more then one possibilities, choose any one .
     $(".in-call-wrap-up").show(300);
     $(".chat-show-wrap").hide(300);
     $(this).addClass("active");
     $(".chat-heading").removeClass("active");
   });
+    // if someone click on chat heading, show chats and hide people
   $(document).on("click", ".chat-heading", function () {
     $(".in-call-wrap-up").hide(300);
     $(".chat-show-wrap").show(300);
     $(this).addClass("active");
     $(".people-heading").removeClass("active");
   });
+  // when someone clicks on meeting heading, give details
   $(document).on("click", ".meeting-heading-cross", function () {
     $(".g-right-details-wrap").hide(300);
   });
@@ -595,16 +620,25 @@ var MyApp = (function () {
     $(".g-details-heading-show").show();
     $(".g-details-heading-show-attachment").hide();
     $(this).addClass("active");
+    // Remove a single class or multiple classes from each element in the set of matched elements
     $(".g-details-heading-attachment").removeClass("active");
   });
   var base_url = window.location.origin;
 
   $(document).on("change", ".custom-file-input", function () {
+    //split() splits a string into an array of substrings, and returns the array:
+    // eg. let text = "How are you doing today?";
+    // const myArray = text.split("o");
+    // o/p -> H,w are y,u d,ing t,day?, this whole is an array separated elements by commas
+    // and Pop removes the last element
     var fileName = $(this).val().split("\\").pop();
+    //The siblings are those having same parent element in DOM Tree.
     $(this).siblings(".custom-file-label").addClass("selected").html(fileName);
   });
 
+    // sharing an image/file to the users
   $(document).on("click", ".share-attach", function (e) {
+    // preventing the default behavior
     e.preventDefault();
     var att_img = $("#customFile").prop("files")[0];
     var formData = new FormData();
@@ -612,6 +646,7 @@ var MyApp = (function () {
     formData.append("meeting_id", meeting_id);
     formData.append("username", user_id);
     console.log(formData);
+    // sending a post request with data 
     $.ajax({
       url: base_url + "/attachimg",
       type: "POST",
@@ -639,6 +674,7 @@ var MyApp = (function () {
       attachFileName +
       "</a></div></div><br/>";
     $("label.custom-file-label").text("");
+    // sharing a file to the users to download
     socket.emit("fileTransferToOther", {
       username: user_id,
       meetingid: meeting_id,
@@ -650,6 +686,7 @@ var MyApp = (function () {
     $(".recording-show").toggle(300);
   });
 
+  // function to handle recording
   $(document).on("click", ".start-record", function () {
     $(this)
       .removeClass()
@@ -657,6 +694,7 @@ var MyApp = (function () {
       .text("Stop Recording");
     startRecording();
   });
+  // fn to handle stop recording
   $(document).on("click", ".stop-record", function () {
     $(this)
       .removeClass()
@@ -667,6 +705,7 @@ var MyApp = (function () {
 
   var mediaRecorder;
   var chunks = [];
+  // async function to handle screen capture
   async function captureScreen(
     mediaContraints = {
       video: true,
@@ -677,6 +716,7 @@ var MyApp = (function () {
     );
     return screenStream;
   }
+  // async fn to handle audio capture
   async function captureAudio(
     mediaContraints = {
       video: false,
@@ -692,14 +732,17 @@ var MyApp = (function () {
     const screenStream = await captureScreen();
     const audioStream = await captureAudio();
     const stream = new MediaStream([
+      // (...) spread syntax, takes in an iterable (e.g an array) and expands it into individual elements.
       ...screenStream.getTracks(),
       ...audioStream.getTracks(),
     ]);
     mediaRecorder = new MediaRecorder(stream);
     mediaRecorder.start();
     mediaRecorder.onstop = function (e) {
+      // when recording stop, prompt the user with the clipName
       var clipName = prompt("Enter a name for your recording");
       stream.getTracks().forEach((track) => track.stop());
+      // blob represents data that not necessarily js format
       const blob = new Blob(chunks, {
         type: "video/webm",
       });
@@ -707,6 +750,7 @@ var MyApp = (function () {
       const a = document.createElement("a");
       a.style.display = "none";
       a.href = url;
+      // download extension be .webm
       a.download = clipName + ".webm";
       document.body.appendChild(a);
       a.click();
